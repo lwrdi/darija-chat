@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>موقع الدردشة</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="welcome-box">
+            <h1>مرحباً بك في موقع الدردشة</h1>
+            <p>تحدث مع أصدقائك بكل سهولة</p>
+            <div class="buttons">
+                <a href="{{ url_for('login') }}" class="btn primary">تسجيل الدخول</a>
+                <a href="{{ url_for('register') }}" class="btn secondary">إنشاء حساب جديد</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

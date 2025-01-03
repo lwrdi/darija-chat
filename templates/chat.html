@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>غرفة الدردشة</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>مرحباً {{ username }}</h2>
+            <a href="{{ url_for('logout') }}" class="btn danger">تسجيل خروج</a>
+        </div>
+        <div class="chat-messages" id="messages"></div>
+        <div class="chat-input">
+            <input type="text" id="messageInput" placeholder="اكتب رسالتك هنا...">
+            <button onclick="sendMessage()" class="btn primary">إرسال</button>
+        </div>
+    </div>
+
+    <script>
+        const messagesDiv = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+
+        // إضافة رسالة للشات
+        function addMessage(username, content, timestamp) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + (username === '{{ username }}' ? 'own-message' : 'other-message');
+            messageDiv.innerHTML = `
+                <div class="message-header">
+                    <span class="username">${username}</span>
+                    <span class="timestamp">${timestamp}</span>
+                </div>
+                <div class="message-content">${content}</div>
+            `;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // إرسال رسالة
+        async function sendMessage() {
+            const content = messageInput.value.trim();
+            if (!content) return;
+
+            try {
+                const response = await fetch('/send_message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: content })
+                });
+
+                if (response.ok) {
+                    messageInput.value = '';
+                    loadMessages();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // تحميل الرسائل
+        async function loadMessages() {
+            try {
+                const response = await fetch('/get_messages');
+                const messages = await response.json();
+                
+                messagesDiv.innerHTML = '';
+                messages.reverse().forEach(msg => {
+                    addMessage(msg.username, msg.content, msg.timestamp);
+                });
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // تحديث الرسائل كل 3 ثواني
+        setInterval(loadMessages, 3000);
+
+        // تحميل الرسائل عند فتح الصفحة
+        loadMessages();
+
+        // إرسال الرسالة عند الضغط على Enter
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
