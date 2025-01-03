@@ -1,105 +1,118 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
-from flask_pymongo import PyMongo
+from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from datetime import datetime
-import json
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
+app.secret_key = os.urandom(24)
 
-# إعداد قاعدة البيانات MongoDB Atlas
-app.config["MONGO_URI"] = os.environ.get('MONGODB_URI', 'mongodb+srv://your-mongodb-uri')
-mongo = PyMongo(app)
+# إعداد قاعدة البيانات SQLite
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'chat.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 
-# الصفحة الرئيسية
+# نماذج قاعدة البيانات
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    messages = db.relationship('Message', backref='author', lazy=True)
+
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String(500), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+# إنشاء قاعدة البيانات
+with app.app_context():
+    db.create_all()
+
 @app.route('/')
 def home():
     if 'username' in session:
         return redirect(url_for('chat'))
     return render_template('index.html')
 
-# تسجيل مستخدم جديد
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        users = mongo.db.users
-        existing_user = users.find_one({'username': request.form['username']})
-
-        if existing_user is None:
-            hashpass = generate_password_hash(request.form['password'])
-            users.insert_one({
-                'username': request.form['username'],
-                'password': hashpass,
-                'email': request.form['email'],
-                'created_at': datetime.now()
-            })
-            session['username'] = request.form['username']
-            return redirect(url_for('chat'))
+        username = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
         
-        return 'اسم المستخدم موجود بالفعل!'
+        if User.query.filter_by(username=username).first():
+            return 'اسم المستخدم موجود بالفعل!'
+        
+        if User.query.filter_by(email=email).first():
+            return 'البريد الإلكتروني مستخدم بالفعل!'
+        
+        user = User(
+            username=username,
+            email=email,
+            password=generate_password_hash(password)
+        )
+        db.session.add(user)
+        db.session.commit()
+        
+        session['username'] = username
+        return redirect(url_for('chat'))
     
     return render_template('register.html')
 
-# تسجيل الدخول
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        users = mongo.db.users
-        login_user = users.find_one({'username': request.form['username']})
-
-        if login_user:
-            if check_password_hash(login_user['password'], request.form['password']):
-                session['username'] = request.form['username']
-                return redirect(url_for('chat'))
+        user = User.query.filter_by(username=request.form['username']).first()
+        
+        if user and check_password_hash(user.password, request.form['password']):
+            session['username'] = user.username
+            return redirect(url_for('chat'))
         
         return 'كلمة المرور أو اسم المستخدم غير صحيح'
     
     return render_template('login.html')
 
-# تسجيل الخروج
 @app.route('/logout')
 def logout():
     session.pop('username', None)
     return redirect(url_for('home'))
 
-# صفحة المحادثة
 @app.route('/chat')
 def chat():
     if 'username' not in session:
         return redirect(url_for('login'))
     return render_template('chat.html', username=session['username'])
 
-# إرسال رسالة
 @app.route('/send_message', methods=['POST'])
 def send_message():
     if 'username' not in session:
         return jsonify({'error': 'يجب تسجيل الدخول أولاً'})
     
-    data = request.json
-    messages = mongo.db.messages
+    content = request.json.get('message')
+    user = User.query.filter_by(username=session['username']).first()
     
-    message = {
-        'username': session['username'],
-        'content': data['message'],
-        'timestamp': datetime.now()
-    }
+    message = Message(content=content, author=user)
+    db.session.add(message)
+    db.session.commit()
     
-    messages.insert_one(message)
     return jsonify({'status': 'success'})
 
-# الحصول على الرسائل
 @app.route('/get_messages')
 def get_messages():
     if 'username' not in session:
         return jsonify({'error': 'يجب تسجيل الدخول أولاً'})
     
-    messages = mongo.db.messages.find().sort('timestamp', -1).limit(50)
+    messages = Message.query.order_by(Message.timestamp.desc()).limit(50).all()
     return jsonify([{
-        'username': msg['username'],
-        'content': msg['content'],
-        'timestamp': msg['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
+        'username': msg.author.username,
+        'content': msg.content,
+        'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')
     } for msg in messages])
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
