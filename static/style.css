@@ -2,12 +2,12 @@
     --primary-color: #2196f3;
     --secondary-color: #1976d2;
     --danger-color: #f44336;
-    --background-color: #f0f2f5;
+    --background-color: #f8f9fa;
     --text-color: #333;
 }
 
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
     background-color: var(--background-color);
@@ -159,6 +159,123 @@ body {
     font-size: 16px;
 }
 
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+.post-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+    margin-bottom: 20px;
+    padding: 15px;
+}
+
+.post-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.profile-pic {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-left: 10px;
+}
+
+.post-content {
+    margin: 15px 0;
+}
+
+.post-image {
+    max-width: 100%;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+.post-actions {
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    border-top: 1px solid #eee;
+}
+
+.action-button {
+    border: none;
+    background: none;
+    color: #666;
+    cursor: pointer;
+    padding: 5px 10px;
+    transition: color 0.3s;
+}
+
+.action-button:hover {
+    color: #007bff;
+}
+
+.comments-section {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+
+.comment {
+    padding: 10px;
+    margin: 5px 0;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.profile-header {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.large-profile-pic {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 15px;
+    display: block;
+}
+
+.bio {
+    max-width: 600px;
+    margin: 15px auto;
+    color: #666;
+}
+
+.message-list {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.message {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.1);
+}
+
+.message.sent {
+    background: #007bff;
+    color: white;
+    margin-right: 20px;
+}
+
+.message.received {
+    background: white;
+    margin-left: 20px;
+}
+
 @media (max-width: 768px) {
     .container {
         padding: 10px;
@@ -170,5 +287,15 @@ body {
     
     .message {
         max-width: 85%;
+    }
+    
+    .post-card {
+        border-radius: 0;
+        margin: 10px -10px;
+    }
+    
+    .profile-header {
+        border-radius: 0;
+        margin: 0 -10px 20px;
     }
 }

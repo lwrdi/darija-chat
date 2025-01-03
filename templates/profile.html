@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="profile-header">
+    <img src="{{ url_for('static', filename='uploads/' + user.profile_pic) }}" class="large-profile-pic">
+    <h2>{{ user.username }}</h2>
+    <p class="bio">{{ user.bio }}</p>
+    {% if user.username != session['username'] %}
+    <button class="btn btn-primary send-message-btn" data-username="{{ user.username }}">
+        <i class="fas fa-envelope"></i> إرسال رسالة
+    </button>
+    {% endif %}
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        {% for post in posts %}
+        <div class="post-card">
+            <div class="post-header">
+                <img src="{{ url_for('static', filename='uploads/' + post.author.profile_pic) }}" class="profile-pic">
+                <div>
+                    <h5 class="mb-0">{{ post.author.username }}</h5>
+                    <small class="text-muted">{{ post.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                </div>
+            </div>
+            
+            <div class="post-content">
+                {{ post.content }}
+                {% if post.image %}
+                <img src="{{ url_for('static', filename='uploads/' + post.image) }}" class="post-image">
+                {% endif %}
+            </div>
+
+            <div class="post-actions">
+                <button class="action-button like-button" data-post-id="{{ post.id }}">
+                    <i class="far fa-heart"></i> {{ post.likes|length }} إعجاب
+                </button>
+                <button class="action-button comment-button" data-post-id="{{ post.id }}">
+                    <i class="far fa-comment"></i> {{ post.comments|length }} تعليق
+                </button>
+            </div>
+
+            <div class="comments-section" id="comments-{{ post.id }}">
+                {% for comment in post.comments %}
+                <div class="comment">
+                    <strong>{{ comment.user.username }}:</strong> {{ comment.content }}
+                </div>
+                {% endfor %}
+                <form class="comment-form mt-2" data-post-id="{{ post.id }}">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="اكتب تعليقاً...">
+                        <button class="btn btn-primary" type="submit">تعليق</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- نافذة الرسائل -->
+<div class="modal fade" id="messageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إرسال رسالة إلى {{ user.username }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="message-form">
+                    <div class="mb-3">
+                        <textarea class="form-control" id="message-content" rows="3" placeholder="اكتب رسالتك هنا..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">إرسال</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // إعجاب بالمنشور
+    $('.like-button').click(function() {
+        const postId = $(this).data('post-id');
+        $.post(`/like_post/${postId}`, function() {
+            location.reload();
+        });
+    });
+
+    // إضافة تعليق
+    $('.comment-form').submit(function(e) {
+        e.preventDefault();
+        const postId = $(this).data('post-id');
+        const content = $(this).find('input').val();
+        
+        $.ajax({
+            url: `/comment_post/${postId}`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ content: content }),
+            success: function() {
+                location.reload();
+            }
+        });
+    });
+
+    // فتح نافذة الرسائل
+    $('.send-message-btn').click(function() {
+        $('#messageModal').modal('show');
+    });
+
+    // إرسال رسالة
+    $('#message-form').submit(function(e) {
+        e.preventDefault();
+        const recipient = '{{ user.username }}';
+        const content = $('#message-content').val();
+        
+        $.ajax({
+            url: `/send_message/${recipient}`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ content: content }),
+            success: function() {
+                $('#messageModal').modal('hide');
+                alert('تم إرسال الرسالة بنجاح');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

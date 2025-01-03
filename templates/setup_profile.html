@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title text-center mb-4">إعداد الملف الشخصي</h3>
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="mb-3 text-center">
+                        <img id="profile-preview" src="{{ url_for('static', filename='uploads/default.jpg') }}" class="large-profile-pic mb-3">
+                        <div class="mb-3">
+                            <label class="form-label">الصورة الشخصية</label>
+                            <input type="file" class="form-control" name="profile_pic" accept="image/*" onchange="previewImage(this)">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">نبذة عني</label>
+                        <textarea class="form-control" name="bio" rows="3" placeholder="اكتب نبذة عن نفسك..."></textarea>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">حفظ</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            $('#profile-preview').attr('src', e.target.result);
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
+{% endblock %}

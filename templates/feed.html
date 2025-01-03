@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <!-- نموذج إنشاء منشور جديد -->
+        <div class="post-card">
+            <form action="{{ url_for('create_post') }}" method="POST" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <textarea class="form-control" name="content" rows="3" placeholder="ماذا يدور في بالك؟"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">إضافة صورة</label>
+                    <input type="file" class="form-control" name="image" accept="image/*">
+                </div>
+                <button type="submit" class="btn btn-primary">نشر</button>
+            </form>
+        </div>
+
+        <!-- قائمة المنشورات -->
+        {% for post in posts %}
+        <div class="post-card">
+            <div class="post-header">
+                <img src="{{ url_for('static', filename='uploads/' + post.author.profile_pic) }}" class="profile-pic">
+                <div>
+                    <h5 class="mb-0">
+                        <a href="{{ url_for('profile', username=post.author.username) }}" class="text-decoration-none">
+                            {{ post.author.username }}
+                        </a>
+                    </h5>
+                    <small class="text-muted">{{ post.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                </div>
+            </div>
+            
+            <div class="post-content">
+                {{ post.content }}
+                {% if post.image %}
+                <img src="{{ url_for('static', filename='uploads/' + post.image) }}" class="post-image">
+                {% endif %}
+            </div>
+
+            <div class="post-actions">
+                <button class="action-button like-button" data-post-id="{{ post.id }}">
+                    <i class="far fa-heart"></i> {{ post.likes|length }} إعجاب
+                </button>
+                <button class="action-button comment-button" data-post-id="{{ post.id }}">
+                    <i class="far fa-comment"></i> {{ post.comments|length }} تعليق
+                </button>
+            </div>
+
+            <div class="comments-section" id="comments-{{ post.id }}">
+                {% for comment in post.comments %}
+                <div class="comment">
+                    <strong>{{ comment.user.username }}:</strong> {{ comment.content }}
+                </div>
+                {% endfor %}
+                <form class="comment-form mt-2" data-post-id="{{ post.id }}">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="اكتب تعليقاً...">
+                        <button class="btn btn-primary" type="submit">تعليق</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // إعجاب بالمنشور
+    $('.like-button').click(function() {
+        const postId = $(this).data('post-id');
+        $.post(`/like_post/${postId}`, function() {
+            location.reload();
+        });
+    });
+
+    // إضافة تعليق
+    $('.comment-form').submit(function(e) {
+        e.preventDefault();
+        const postId = $(this).data('post-id');
+        const content = $(this).find('input').val();
+        
+        $.ajax({
+            url: `/comment_post/${postId}`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ content: content }),
+            success: function() {
+                location.reload();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

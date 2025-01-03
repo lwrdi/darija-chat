@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <h3 class="mb-4">الرسائل الواردة</h3>
+        <div class="message-list">
+            {% for message in received_messages %}
+            <div class="message received">
+                <div class="d-flex align-items-center mb-2">
+                    <img src="{{ url_for('static', filename='uploads/' + message.sender.profile_pic) }}" class="profile-pic">
+                    <div>
+                        <h6 class="mb-0">{{ message.sender.username }}</h6>
+                        <small class="text-muted">{{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                </div>
+                <p class="mb-0">{{ message.content }}</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <h3 class="mb-4 mt-5">الرسائل المرسلة</h3>
+        <div class="message-list">
+            {% for message in sent_messages %}
+            <div class="message sent">
+                <div class="d-flex align-items-center mb-2">
+                    <img src="{{ url_for('static', filename='uploads/' + message.recipient.profile_pic) }}" class="profile-pic">
+                    <div>
+                        <h6 class="mb-0">{{ message.recipient.username }}</h6>
+                        <small class="text-muted">{{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                </div>
+                <p class="mb-0">{{ message.content }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
